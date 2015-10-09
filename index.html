@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width"></meta>
+  	<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+	<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+	
+    <title>Socket.IO chat</title>
+    <style>
+      .actor>.text{
+        //transform: rotate(-90deg);
+        background-color: #cdf;
+        min-width: 30px;
+        min-height: 30px;
+        max-width:150px;
+        border-radius: 6px;
+        padding:6px;
+        display: inline-block;
+        //position:absolute;
+        bottom:150px;
+        left:-40px;
+        overflow: hidden;
+      }
+      .actor{
+        min-width:40px;
+        display:inline-block;
+        height:80px;
+        overflow: none;
+        //position:relative;
+        bottom:0;
+      }
+      #actors{
+        position:absolute;
+        bottom:0;
+        text-align: left;
+        vertical-align: bottom;
+        padding-bottom: 50px;
+      }
+      #voice{
+         width:140px;
+         height:140px;
+         border:none;
+         background-color: transparent;
+
+      }
+      .mono{
+        position:relative;
+        width:40px;
+        bottom:-59px;
+        left:-10px;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div id="actors"></div>
+    
+  </body>
+</html>
+<script>
+
+$(document).ready(function(){
+  var me="none";
+  var socket = io();
+  //create new user between all the peers, recieve a new user
+  socket.emit('new user');
+  socket.on('hello', function (who,others){
+    console.log("hello,mr"+who);
+    console.log(others);
+    for(a=0;a<others.length;a++){
+      newuser(others[a]);
+    }
+    me=who;
+    $("#"+who+">.text").append('You:<br><textarea id="voice" autocomplete="off" />');
+    appendVoice();
+  });
+  socket.on('new user', function(who){
+    newuser(who);
+  });
+  //cast a message, recieve a message
+  function appendVoice(){
+    $('#voice').on('input change',function(){
+      socket.emit('update',me,$('#voice').val());
+    });
+  }
+  socket.on('update', function(who,msg){
+    console.log("mr "+who+" wrote "+msg);
+    $('#'+who+">.text").html(msg);
+  });
+  socket.on('disconnect', function(who){
+    console.log("mr "+who+" disconnected");
+    $('#'+who+">img").animate({"bottom":200});
+    $('#'+who+"").fadeOut();
+  });
+  function newuser(who){
+    if($("#"+who).length==0){
+      console.log("mr "+who+" entered");
+      $('#actors').append($('<div class="actor" style="max-width:0px; opacity:0" id="'+who+'">'));
+      
+      $("#"+who).append($('<div class="text">'));
+      $("#"+who).append('<img class="mono" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Aiga_toiletsq_men.svg" />');
+      $("#"+who).animate({"max-width":400,opacity:1});
+      
+    }
+
+      
+  }
+
+
+});
+  </script>
